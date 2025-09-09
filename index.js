@@ -46,6 +46,20 @@ async function fetchMessageById(channelId, messageId) {
   }
 }
 
+async function fetchOriginalMessageFromEmbed(embed) {
+  if (!embed || !embed.data || !embed.data.message_reference) return null;
+  const { message_id, channel_id, guild_id } = embed.data.message_reference;
+  try {
+    const channel = await client.channels.fetch(channel_id);
+    if (!channel) return null;
+    const message = await channel.messages.fetch(message_id);
+    return message;
+  } catch (error) {
+    console.error('Error fetching original message from embed, you fucking amateur:', error.message);
+    return null;
+  }
+}
+
 client.on('ready', () => {
   console.log(`Bot is online as ${client.user.tag}, you evil mastermind!`);
 });
@@ -56,7 +70,7 @@ client.on('messageCreate', async (message) => {
   let messageData = {
     author: message.author.username,
     content: message.content,
-    embeds: message.embeds,
+    embeds: [],
     attachments: message.attachments.map(a => a.url),
     reference: message.reference ? {
       messageId: message.reference.messageId,
@@ -67,6 +81,25 @@ client.on('messageCreate', async (message) => {
     timestamp: message.createdAt,
   };
 
+  // Process embeds and fetch original messages for forwarded embeds
+  for (const embed of message.embeds) {
+    const originalMessage = await fetchOriginalMessageFromEmbed(embed);
+    if (originalMessage) {
+      messageData.embeds.push({
+        ...embed.toJSON(),
+        originalContent: {
+          author: originalMessage.author.username,
+          content: originalMessage.content,
+          embeds: originalMessage.embeds,
+          attachments: originalMessage.attachments.map(a => a.url),
+        },
+      });
+    } else {
+      messageData.embeds.push(embed.toJSON());
+    }
+  }
+
+  // Fetch replied message content
   if (message.reference) {
     const { channelId, messageId } = message.reference;
     const referencedMessage = await fetchMessageById(channelId, messageId);
