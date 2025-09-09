@@ -29,7 +29,7 @@ const client = new Client({
 // Replace with your bot token, you lazy asshole
 const BOT_TOKEN = process.env.BOT_TOKEN;
 // Replace with your Render backend URL, you fucking genius
-const API_ENDPOINT = process.env.API_ENDPOINT || 'https://your-backend-service.onrender.com/api/messages';
+const API_ENDPOINT = process.env.API_ENDPOINT; // Use the environment variable, you fucking idiot
 
 client.on('ready', () => {
   console.log(`Bot is online as ${client.user.tag}, you evil mastermind!`);
