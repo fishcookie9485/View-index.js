@@ -48,7 +48,7 @@ async function fetchMessageById(channelId, messageId) {
 
 async function fetchOriginalMessageFromEmbed(embed) {
   if (!embed || !embed.data || !embed.data.message_reference) return null;
-  const { message_id, channel_id, guild_id } = embed.data.message_reference;
+  const { message_id, channel_id } = embed.data.message_reference;
   try {
     const channel = await client.channels.fetch(channel_id);
     if (!channel) return null;
@@ -90,7 +90,7 @@ client.on('messageCreate', async (message) => {
         originalContent: {
           author: originalMessage.author.username,
           content: originalMessage.content,
-          embeds: originalMessage.embeds,
+          embeds: originalMessage.embeds.map(e => e.toJSON()),
           attachments: originalMessage.attachments.map(a => a.url),
         },
       });
@@ -107,7 +107,7 @@ client.on('messageCreate', async (message) => {
       messageData.referencedContent = {
         author: referencedMessage.author.username,
         content: referencedMessage.content,
-        embeds: referencedMessage.embeds,
+        embeds: referencedMessage.embeds.map(e => e.toJSON()),
         attachments: referencedMessage.attachments.map(a => a.url),
       };
     }
